@@ -1,45 +1,33 @@
-# import bs4
-# import io
-# from telegram.ext import Updater
-# import telegram
-# import lxml
-# import re
-# import requests
-# import socket
-# import urllib
-# import telebot
-# import os
+from flask import request
+from flask import Flask
+from flask_sslify import SSLify
+import seaborn as sns
+from app.resource import postBot
+from app.Global import TOKEN, URL
+import telegram
+# ~/ngrok http 5000
+# https://api.telegram.org/bot5312550763:AAEhW6Qbj9TBUW0zQOUThNxpxFGDZ-bsZkY/setWebhook?url=https://328d-93-175-28-9.eu.ngrok.io
 
-# TOKEN = '5312550763:AAEhW6Qbj9TBUW0zQOUThNxpxFGDZ-bsZkY'
-# help=""
-# bot = telebot.TeleBot(TOKEN);
-# @bot.message_handler(content_types=['text'])
-# def get_text_messages(message):
-#     if message.text == "Привет":
-#         bot.send_message(message.from_user.id, "Привет, чем я могу тебе помочь?")
-#     if message.text == "help":
-#         bot.send_message(message.from_user.id,help)
-#     else:
-#         bot.send_message(message.from_user.id,message.text)
-# # PORT = int(os.environ.get('PORT', '8443'))
-# # updater = Updater(TOKEN)
-# # # add handlers
-# # updater.start_webhook(listen="127.0.0.1",
-# #                       port=PORT,
-# #                       url_path=TOKEN,
-# #                       webhook_url="https://<appname>.herokuapp.com/" + TOKEN)
-# # updater.idle()
+app = Flask(__name__)
+# sslify = SSLify(app)
+sns.set(style='darkgrid')
 
-# # @bot.message_handler(func=lambda message: True, content_types=['text'])
-# # def echo_message(message):
-# #     bot.reply_to(message, message.text)
-# # bot = telebot.TeleBot('5312550763:AAEhW6Qbj9TBUW0zQOUThNxpxFGDZ-bsZkY')
-# # Запускаем бота
-# bot.polling(none_stop=True, interval=0)
-import bs4
-import io
-import lxml
-import re
-import requests
-import socket
-import urllib
+bot = telegram.Bot(token=TOKEN)
+@app.route('/set_webhook', methods=['GET', 'POST'])
+def set_webhook():
+    s = bot.setWebhook('{URL}{HOOK}'.format(URL=URL, HOOK=TOKEN))
+    if s:
+        return "webhook setup ok"
+    else:
+        return "webhook setup failed"
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        postBot()
+    return '<h1>hello</h1>'
+
+
+if __name__ == '__main__':
+    app.run()
