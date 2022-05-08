@@ -1,10 +1,13 @@
+from app.Global import TEXT_ERR, HELP, DATA, FLAGCOMMMAND, STATISTICS, command, COMMANDHELP, USD_RUB
+from bs4 import BeautifulSoup as bs
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import requests
+import time
 from flask import jsonify
 from flask import request
-from bs4 import BeautifulSoup as bs
-from app.Global import TEXT_ERR, HELP, URL, DATA, FLAGCOMMMAND, STATISTICS, command, COMMANDHELP, USD_RUB
 import time
-import matplotlib.pyplot as plt
+
 
 
 def parse_response(msg):
@@ -54,20 +57,6 @@ def return_money_convert(arr):
         return -100
 
 
-def send_photo(chat_id, file_opened):
-    method = "sendPhoto"
-    params = {'chat_id': chat_id}
-    files = {'photo': file_opened}
-    resp = requests.post(URL + method, params, files=files)
-    return resp
-
-
-def send_message(id, text='write "help"'):
-    url = URL + 'sendMessage'
-    answer = {'chat_id': id, 'text': text, 'id': id}
-    r = requests.post(url, json=answer)
-    return r.json()
-
 
 def get_digits(text):
     new_text = ""
@@ -82,9 +71,13 @@ def get_digits(text):
     return float(new_text)
 
 
-def historical_coin_url(data1, data2):
+def historical_coin_url(data1, data2, bot):
     url = f"https://www.cbr.ru/currency_base/dynamics/?UniDbQuery.Posted=True&UniDbQuery.so=1&UniDbQuery.mode=1&UniDbQuery.date_req1=&UniDbQuery.date_req2=&UniDbQuery.VAL_NM_RQ=R01235&UniDbQuery.From={data1}&UniDbQuery.To={data2}"
-    content = requests.get(url)
+    try:
+        content = requests.get(url)
+    except requests.exceptions.Timeout as e:
+        bot.send_message(chat_id = id, text='Упс... Что-то пошло не так')
+        raise SystemExit(e)
     soup = bs(content.text, "html.parser")
     exchange_rate_html = soup.find_all("td")
     arrData = []
@@ -100,13 +93,15 @@ def historical_coin_url(data1, data2):
             if(count > 0):
                 arrCourse.append(get_digits(i.text))
             count += 1
-            
+                
     return arrData, arrCourse
+    
 
-def plotconfig(arrData, arrCourse):
+
+def plotconfig(arrData, arrCourse,bot):
     fig, ax = plt.subplots()
     ax.plot(list(reversed(arrData)), list(
-        reversed(arrCourse)), color='b', linewidth=3)
+    reversed(arrCourse)), color='b', linewidth=3)
     ax.tick_params(axis='both',  # Применяем параметры к обеим осям
                    which='major',  # Применяем параметры к основным делениям
                    length=2,  # Длинна делений
@@ -127,49 +122,44 @@ def plotconfig(arrData, arrCourse):
     plt.savefig('my_plot.png')
 
 
-def graphStat(result, id):
-    msg = ''
+def graphStat(result, id, bot):
     print("res=", result)
     data1 = result[0]
     data2 = result[1]
-    arrData, arrCourse = historical_coin_url(data1, data2)
+    arrData, arrCourse = historical_coin_url(data1, data2, bot)
+    if arrData!=0 and arrCourse!=0:
+        plotconfig(arrData, arrCourse,bot)
+        bot.send_photo(chat_id = id, photo=open('my_plot.png', 'rb'))
 
-    for i in range(len(arrData)):
-        msg += str(arrData[i]) + ' - ' + str(arrCourse[i]) + '\n'
-    send_message(id, text=msg)
-    plotconfig(arrData, arrCourse)
-    send_photo(id, open('my_plot.png', 'rb'))
-
-def sendRes(result,r, id):
+def sendRes(result,r, id, bot):
     global FLAGCOMMMAND, STATISTICS, command, COMMANDHELP
-
     if result:
         if len(result) == 3 and FLAGCOMMMAND == 0:
             result_converted = return_money_convert(result)
             command = 0
             if result_converted != -100:
-                send_message(id, text=result_converted)
+                bot.send_message(chat_id = id, text=result_converted)
             else:
-                send_message(id, text='Ошибка')
+                bot.send_message(chat_id = id, text='Ошибка')
             return jsonify(r)
         elif STATISTICS == 2:
-            send_message(id, text=DATA)
+            bot.send_message(chat_id = id, text=DATA)
             STATISTICS = 0
             command = 0
         elif STATISTICS == 1:
             STATISTICS = 0
-            graphStat(result, id)
+            graphStat(result, id, bot)
+
             command = 0
         elif COMMANDHELP == 1:
             COMMANDHELP = 0
             command = 0
-            send_message(id, text=HELP)
+            bot.send_message(chat_id = id, text=HELP)
         else:
-            send_message(id, text=TEXT_ERR)
+            bot.send_message(chat_id = id, text='Упс... Что-то пошло не так')
 
-def postBot():
+def postBot(bot):
     global FLAGCOMMMAND, STATISTICS, command, COMMANDHELP
-
     r = request.get_json()
     id = r['message']['chat']['id']
     message = r['message']['text']
@@ -190,4 +180,4 @@ def postBot():
     if FLAGCOMMMAND == 1 and command == 0:
         FLAGCOMMMAND = 0
         STATISTICS = 1
-    sendRes(result, r, id)
+    sendRes(result, r, id,bot)
