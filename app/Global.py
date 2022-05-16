@@ -1,5 +1,8 @@
+import os 
+
+
 TEXT_ERR = "Неверный запрос, воспользуйся 'help'"
-TOKEN = 'Token bot'
+TOKEN = os.getenv('TOKENBOTREWIEW')
 URLHERUKU = 'https://coinsconvert.herokuapp.com/'
 HELP = 'Что бы конвартировать необходимо \n\n\n\
 Валюта из которой конвертируем(USD, RUB, UAH) Валюта в которую конвертируем(USD, RUB, UAH) сумма\nМожно воспользоваться готовыми командами'
