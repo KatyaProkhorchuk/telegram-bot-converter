@@ -22,6 +22,9 @@ def parse_response(msg):
 
 
 def get_digit(text):
+    """
+    преобразовывает строку в число
+    """
     new_text = ""
     for c in text:
         if c.isdigit() or c == ".":
@@ -32,6 +35,9 @@ def get_digit(text):
 
 
 def convert_currency_xe(src, dst, amount):
+    """
+    парсит сайт и получает конвертируемую сумму в указанной валюте
+    """
     url = f"https://www.xe.com/currencyconverter/convert/?Amount={amount}&From={src}&To={dst}"
     try:
         content = requests.get(url).content
@@ -45,6 +51,9 @@ def convert_currency_xe(src, dst, amount):
 
 
 def return_money_convert(arr):
+    """
+    конвертирует валюту
+    """
     try:
         source_currency = arr[0]
         destination_currency = arr[1]
@@ -59,6 +68,9 @@ def return_money_convert(arr):
 
 
 def get_digits(text):
+    """
+    преобразовывает строку в число
+    """
     new_text = ""
     for c in text:
         if c.isdigit() or c == ",":
@@ -72,6 +84,9 @@ def get_digits(text):
 
 
 def historical_coin_url(data1, data2, bot):
+    """
+    парсит сайт и получает курс
+    """
     url = f"https://www.cbr.ru/currency_base/dynamics/?UniDbQuery.Posted=True&UniDbQuery.so=1&UniDbQuery.mode=1&UniDbQuery.date_req1=&UniDbQuery.date_req2=&UniDbQuery.VAL_NM_RQ=R01235&UniDbQuery.From={data1}&UniDbQuery.To={data2}"
     try:
         content = requests.get(url)
@@ -99,6 +114,9 @@ def historical_coin_url(data1, data2, bot):
 
 
 def plotconfig(arrData, arrCourse,bot):
+    """
+    строит график изменения цены в от начальной до конечной даты
+    """
     fig, ax = plt.subplots()
     ax.plot(list(reversed(arrData)), list(
     reversed(arrCourse)), color='b', linewidth=3)
@@ -123,6 +141,9 @@ def plotconfig(arrData, arrCourse,bot):
 
 
 def graphStat(result, id, bot):
+    """
+    получает данные по изменению курса и отправляет пользователю результат
+    """
     print("res=", result)
     data1 = result[0]
     data2 = result[1]
@@ -132,6 +153,9 @@ def graphStat(result, id, bot):
         bot.send_photo(chat_id = id, photo=open('my_plot.png', 'rb'))
 
 def sendRes(result,r, id, bot):
+    """
+    отправляет пользователю результат
+    """
     global FLAGCOMMMAND, STATISTICS, command, COMMANDHELP
     if result:
         if len(result) == 3 and FLAGCOMMMAND == 0:
@@ -159,6 +183,9 @@ def sendRes(result,r, id, bot):
             bot.send_message(chat_id = id, text='Упс... Что-то пошло не так')
 
 def postBot(bot):
+    """
+    парсит строку на наличие команд, проверяет правильность ввода и вызывает необходимую функцию для выполнения запроса
+    """
     global FLAGCOMMMAND, STATISTICS, command, COMMANDHELP
     r = request.get_json()
     id = r['message']['chat']['id']
